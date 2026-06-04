@@ -19,11 +19,17 @@ model User {
 
   email         String   @unique
 
-  passwordHash  String
+  passwordHash  String?
 
   phoneNumber   String?
 
   role          String   @default("USER")
+
+  authProvider  String   @default("EMAIL")
+
+  googleId      String?
+
+  profileImage  String?
 
   createdAt     DateTime @default(now())
 
