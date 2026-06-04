@@ -72,7 +72,7 @@ exports.register = async (
     // determine role
     const isAdmin =
       email.endsWith(
-        "@platform.com"
+        "@CCP.in"
       );
 
     const role =
@@ -395,4 +395,4 @@ exports.completeGoogleSignup =
           "Google signup failed",
       });
     }
-};
+  };

@@ -5,10 +5,13 @@ CREATE TABLE "User" (
     "lastName" TEXT NOT NULL,
     "username" TEXT NOT NULL,
     "email" TEXT NOT NULL,
-    "passwordHash" TEXT NOT NULL,
+    "passwordHash" TEXT,
     "phoneNumber" TEXT,
+    "role" TEXT NOT NULL DEFAULT 'USER',
+    "authProvider" TEXT NOT NULL DEFAULT 'EMAIL',
+    "googleId" TEXT,
+    "profileImage" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "User_pkey" PRIMARY KEY ("id")
 );
