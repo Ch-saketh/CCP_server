@@ -1,5 +1,10 @@
 require("dotenv").config();
 
+console.log(
+  "[env-check] DATABASE_URL present?",
+  !!process.env.DATABASE_URL
+);
+
 const app = require("./app");
 
 const PORT =
