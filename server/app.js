@@ -1,14 +1,15 @@
 const express = require("express");
-
 const cors = require("cors");
 
-const authRoutes =
-  require("./src/routes/auth.routes");
+// Import Routes
+const authRoutes = require("./src/routes/auth.routes");
+// ADDED: Import the new stores routes
+// Note: Adjust the path if your stores module is located elsewhere!
+const storeRoutes = require("./src/modules/stores/routes/stores.routes"); 
 
 const app = express();
 
 app.use(cors());
-
 app.use(express.json());
 
 // Request logging middleware
@@ -23,10 +24,9 @@ app.get("/health", (req, res) => {
   res.json({ status: "ok" });
 });
 
-app.use(
-  "/api/auth",
-  authRoutes
-);
+// Mount Routes
+app.use("/api/auth", authRoutes);
+app.use("/api/stores", storeRoutes); // ADDED: Mount stores routes
 
 // Global error handler
 app.use((error, req, res, next) => {
