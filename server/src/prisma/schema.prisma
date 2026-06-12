@@ -90,6 +90,7 @@ model Product {
   @@map("products")
 }
 
+// 2. creator_products TABLE
 model CreatorProduct {
   id                String   @id @default(uuid())
   creatorId         String   @map("creator_id")
@@ -107,6 +108,7 @@ model CreatorProduct {
   @@map("creator_products")
 }
 
+// 3. product_links TABLE
 model ProductLink {
   id           String   @id @default(uuid())
   productId    String   @map("product_id")
@@ -121,6 +123,7 @@ model ProductLink {
   @@map("product_links")
 }
 
+// 4. collections TABLE
 model Collection {
   id          String   @id @default(uuid())
   creatorId   String   @map("creator_id")
@@ -138,6 +141,7 @@ model Collection {
   @@map("collections")
 }
 
+// 5. product_images TABLE
 model ProductImage {
   id           String   @id @default(uuid())
   productId    String   @map("product_id")
@@ -150,6 +154,7 @@ model ProductImage {
   @@map("product_images")
 }
 
+// 6. product_specifications TABLE
 model ProductSpecification {
   id        String @id @default(uuid())
   productId String @map("product_id")
@@ -161,6 +166,7 @@ model ProductSpecification {
   @@map("product_specifications")
 }
 
+// 7. product_submissions TABLE (For the asynchronous AI queue)
 model ProductSubmission {
   id              String   @id @default(uuid())
   creatorId       String   @map("creator_id")
