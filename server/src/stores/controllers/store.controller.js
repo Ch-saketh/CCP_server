@@ -1,4 +1,4 @@
-const prisma = require("../../../config/db"); // Adjust path to your db.js
+const prisma = require("../../auth/config/db");
 const { generateUniqueSlug } = require("../services/store.service");
 
 // POST /api/stores/onboarding

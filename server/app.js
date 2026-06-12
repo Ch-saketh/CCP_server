@@ -3,9 +3,7 @@ const cors = require("cors");
 
 // Import Routes
 const authRoutes = require("./src/auth/routes/auth.routes");
-// ADDED: Import the new stores routes
-// Note: Adjust the path if your stores module is located elsewhere!
-const storeRoutes = require("./src/modules/stores/routes/stores.routes"); 
+const storeRoutes = require("./src/stores/routes/store.routes");
 
 const app = express();
 

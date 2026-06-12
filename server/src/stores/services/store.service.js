@@ -1,4 +1,4 @@
-const prisma = require("../../../config/db"); // Adjust this path to wherever your prisma client is exported
+const prisma = require("../../auth/config/db");
 
 const generateUniqueSlug = async (storeName) => {
   // Convert "Saketh Tech" to "saketh-tech"
