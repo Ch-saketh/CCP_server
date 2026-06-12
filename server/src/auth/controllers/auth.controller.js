@@ -1,5 +1,15 @@
 const prisma = require("../config/db");
 
+const {
+  isDisposableEmail,
+} = require("../utils/emailValidator");
+
+
+
+
+const sendOTP =
+  require("../utils/sendEmail");
+
 
 const {
   hashPassword,
@@ -173,6 +183,15 @@ exports.register = async (req, res) => {
 
     console.log("1. Validation passed");
 
+
+    if (isDisposableEmail(email)) {
+  return res.status(400).json({
+    success: false,
+    message:
+      "Temporary email addresses are not allowed",
+  });
+}
+
     // role logic
     let role;
 
@@ -204,6 +223,28 @@ exports.register = async (req, res) => {
     }
 
     console.log("3. Email check passed");
+
+    const disposableDomains = [
+  "mailinator.com",
+  "10minutemail.com",
+  "guerrillamail.com",
+  "tempmail.com",
+];
+
+const domain =
+  email.split("@")[1];
+
+if (
+  disposableDomains.includes(
+    domain
+  )
+) {
+  return res.status(400).json({
+    success: false,
+    message:
+      "Temporary email addresses are not allowed",
+  });
+}
 
     // existing username
     const existingUsername =
@@ -249,37 +290,57 @@ exports.register = async (req, res) => {
 
     console.log("5. Password hashed");
 
+        const otp = Math.floor(
+      100000 + Math.random() * 900000
+    ).toString();
+
+    const otpExpiresAt = new Date(
+      Date.now() + 10 * 60 * 1000
+    );
+
 
 
     // create user
-    const user =
-      await prisma.user.create({
-        data: {
-          firstName,
-          lastName,
-          username,
-          email,
-          passwordHash: hashedPassword,
-          phoneNumber,
-          role,
-          authProvider: "EMAIL",
-        },
-      });
+ const user = await prisma.user.create({
+ data: {
+    firstName,
+    lastName,
+
+    email,
+    username,
+
+    passwordHash: hashedPassword,
+
+    phoneNumber,
+
+    googleId: null,
+
+    profileImage: null,
+
+    onboardingCompleted: false,
+
+    role,
+
+    authProvider: "EMAIL",
+
+    emailVerified: false,
+
+    otpCode: otp,
+
+    otpExpiresAt,
+  },
+});
 
     console.log("6. User created");
+    await sendOTP(email, otp);
     console.log(user);
 
-    // generate token
-    const token =
-      generateToken(user);
-
-    console.log("7. JWT generated");
-
+    
     return res.status(201).json({
-      success: true,
-      token,
-      user,
-    });
+  success: true,
+  message:
+    "OTP sent to your email. Please verify.",
+});
 
   } catch (error) {
     console.error(
@@ -322,6 +383,15 @@ exports.login = async (
           "User not found",
       });
     }
+
+
+    if (!user.emailVerified) {
+  return res.status(403).json({
+    success: false,
+    message:
+      "Please verify your email first",
+  });
+}
 
     // compare password
     const isMatch =
@@ -367,6 +437,128 @@ exports.login = async (
 
     return res.status(500).json({
       message: "Server Error",
+    });
+  }
+};
+
+
+exports.verifyOTP = async (
+  req,
+  res
+) => {
+  try {
+
+    const { email, otp } =
+      req.body;
+
+    const user =
+      await prisma.user.findUnique({
+        where: { email },
+      });
+
+    if (!user) {
+      return res.status(404).json({
+        message:
+          "User not found",
+      });
+    }
+
+    if (user.otpCode !== otp) {
+      return res.status(400).json({
+        message:
+          "Invalid OTP",
+      });
+    }
+
+    if (
+      user.otpExpiresAt <
+      new Date()
+    ) {
+      return res.status(400).json({
+        message:
+          "OTP expired",
+      });
+    }
+
+    await prisma.user.update({
+      where: { email },
+
+      data: {
+        emailVerified: true,
+        otpCode: null,
+        otpExpiresAt: null,
+      },
+    });
+
+    return res.json({
+      success: true,
+      message:
+        "Email verified successfully",
+    });
+
+  } catch (error) {
+
+    return res.status(500).json({
+      message:
+        "Server Error",
+    });
+  }
+};
+
+
+exports.resendOTP = async (req, res) => {
+  try {
+
+    const { email } = req.body;
+
+    const user = await prisma.user.findUnique({
+      where: { email }
+    });
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found"
+      });
+    }
+
+    if (user.emailVerified) {
+      return res.status(400).json({
+        success: false,
+        message: "Email already verified"
+      });
+    }
+
+    const otp = Math.floor(
+      100000 + Math.random() * 900000
+    ).toString();
+
+    const otpExpiresAt = new Date(
+      Date.now() + 10 * 60 * 1000
+    );
+
+    await prisma.user.update({
+      where: { email },
+      data: {
+        otpCode: otp,
+        otpExpiresAt
+      }
+    });
+
+    await sendOTP(email, otp);
+
+    return res.json({
+      success: true,
+      message: "OTP sent successfully"
+    });
+
+  } catch (error) {
+
+    console.error(error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Server Error"
     });
   }
 };
@@ -510,30 +702,29 @@ exports.completeGoogleSignup =
       const user =
         await prisma.user.create({
 
-          data: {
+         data: {
+  firstName,
+  lastName,
 
-            firstName,
+  email,
+  username,
 
-            lastName,
+  passwordHash: hashedPassword,
 
-            email,
+  phoneNumber,
 
-            username,
+  googleId,
 
-            passwordHash:
-              hashedPassword,
+  profileImage,
 
-            phoneNumber,
+  onboardingCompleted: false,
 
-            googleId,
+  authProvider: "GOOGLE",
 
-            profileImage,
+  role: "USER",
 
-            authProvider:
-              "GOOGLE",
-
-            role: "USER",
-          },
+  emailVerified: true,
+}
         });
 
       // jwt token
@@ -563,3 +754,29 @@ exports.completeGoogleSignup =
       });
     }
   };
+
+
+
+  exports.completeOnboarding = async (req, res) => {
+  try {
+    const user = await prisma.user.update({
+      where: {
+        id: req.user.id,
+      },
+      data: {
+        onboardingCompleted: true,
+      },
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Onboarding completed",
+      user,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};

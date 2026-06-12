@@ -11,9 +11,18 @@ const {
 
   completeGoogleSignup,
 
+  verifyOTP,
+
+  resendOTP,
+
+  completeOnboarding,
+
 } = require(
   "../controllers/auth.controller"
 );
+
+
+
 
 const {
 
@@ -25,6 +34,12 @@ const {
 
 // PUBLIC ROUTES
 
+router.patch(
+  "/complete-onboarding",
+  authenticate,
+  completeOnboarding
+);
+
 router.post(
   "/register",
   register
@@ -34,6 +49,13 @@ router.post(
   "/login",
   login
 );
+
+router.post(
+  "/verify-otp",
+  verifyOTP
+);
+
+router.post("/resend-otp", resendOTP);
 
 // GOOGLE LOGIN
 router.post(

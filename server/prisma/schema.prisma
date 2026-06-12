@@ -8,87 +8,68 @@ datasource db {
 }
 
 model User {
+  id              String           @id @default(uuid())
+  firstName       String
+  lastName        String
+  username        String           @unique
+  email           String           @unique
+  passwordHash    String?
+  phoneNumber     String?
+ 
+  authProvider    String           @default("EMAIL")
+  googleId        String?
+  profileImage    String?
+  role            String           @default("USER")
+  emailVerified   Boolean          @default(false)
+  otpCode         String?
+  otpExpiresAt    DateTime?
 
-  id            String   @id @default(uuid())
-
-  firstName     String
-
-  lastName      String
-
-  username      String   @unique
-
-  email         String   @unique
-
-  passwordHash  String?
-
-  phoneNumber   String?
-
-  role          String   @default("USER")
-
-  authProvider  String   @default("EMAIL")
-
-  googleId      String?
-
-  profileImage  String?
-
-  createdAt     DateTime @default(now())
-
-  refreshTokens RefreshToken[]
-
-  // Relations to new tables
-  creatorProducts CreatorProduct[]
+  onboardingCompleted Boolean @default(false)
+  createdAt       DateTime         @default(now())
+  updatedAt DateTime @updatedAt
+  refreshTokens   RefreshToken[]
   collections     Collection[]
+  creatorProducts CreatorProduct[]
 }
 
 model RefreshToken {
-
-  id         String   @id @default(uuid())
-
-  token      String
-
-  userId     String
-
-  expiresAt  DateTime
-
-  revokedAt  DateTime?
-
-  createdAt  DateTime @default(now())
-
-  user User @relation(fields: [userId], references: [id])
+  id        String    @id @default(uuid())
+  token     String
+  userId    String
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime  @default(now())
+  user      User      @relation(fields: [userId], references: [id])
 }
 
-// 1. PRODUCT TABLE
 model Product {
-  id                String                 @id @default(uuid())
-  title             String
-  slug              String                 @unique
-  brand             String?
-  shortDescription  String?                @map("short_description")
-  fullDescription   String?                @map("full_description")
-  category          String
-  subcategory       String?
-  primaryImageUrl   String?                @map("primary_image_url")
-  price             Decimal                @db.Decimal(10, 2)
-  currency          String                 @default("INR")
-  rating            Float?
-  reviewCount       Int                    @default(0) @map("review_count")
-  sourcePlatform    String?                @map("source_platform")
-  sourceProductId   String?                @map("source_product_id")
-  isActive          Boolean                @default(true) @map("is_active")
-  createdAt         DateTime               @default(now()) @map("created_at")
-  updatedAt         DateTime               @updatedAt @map("updated_at")
-
-  // Relations
+  id                    String                 @id @default(uuid())
+  title                 String
+  slug                  String                 @unique
+  brand                 String?
+  shortDescription      String?                @map("short_description")
+  fullDescription       String?                @map("full_description")
+  category              String
+  subcategory           String?
+  primaryImageUrl       String?                @map("primary_image_url")
+  price                 Decimal                @db.Decimal(10, 2)
+  currency              String                 @default("INR")
+  rating                Float?
+  reviewCount           Int                    @default(0) @map("review_count")
+  sourcePlatform        String?                @map("source_platform")
+  sourceProductId       String?                @map("source_product_id")
+  isActive              Boolean                @default(true) @map("is_active")
+  createdAt             DateTime               @default(now()) @map("created_at")
+  updatedAt             DateTime               @updatedAt @map("updated_at")
   creatorProducts       CreatorProduct[]
-  productLinks          ProductLink[]
   productImages         ProductImage[]
+  productLinks          ProductLink[]
   productSpecifications ProductSpecification[]
   collections           Collection[]           @relation("CollectionToProduct")
 
   @@map("products")
 }
 
-// 2. creator_products TABLE
 model CreatorProduct {
   id                String   @id @default(uuid())
   creatorId         String   @map("creator_id")
@@ -99,15 +80,12 @@ model CreatorProduct {
   status            String   @default("PENDING")
   createdAt         DateTime @default(now()) @map("created_at")
   updatedAt         DateTime @updatedAt @map("updated_at")
-
-  // Relations
-  creator User    @relation(fields: [creatorId], references: [id])
-  product Product @relation(fields: [productId], references: [id])
+  creator           User     @relation(fields: [creatorId], references: [id])
+  product           Product  @relation(fields: [productId], references: [id])
 
   @@map("creator_products")
 }
 
-// 3. product_links TABLE
 model ProductLink {
   id           String   @id @default(uuid())
   productId    String   @map("product_id")
@@ -116,55 +94,60 @@ model ProductLink {
   affiliateUrl String?  @map("affiliate_url")
   isPrimary    Boolean  @default(false) @map("is_primary")
   createdAt    DateTime @default(now()) @map("created_at")
-
-  // Relations
-  product Product @relation(fields: [productId], references: [id])
+  product      Product  @relation(fields: [productId], references: [id])
 
   @@map("product_links")
 }
 
-// 4. collections TABLE
 model Collection {
-  id          String   @id @default(uuid())
-  creatorId   String   @map("creator_id")
+  id          String    @id @default(uuid())
+  creatorId   String    @map("creator_id")
   title       String
-  slug        String   @unique
+  slug        String    @unique
   description String?
-  coverImage  String?  @map("cover_image")
-  isPublic    Boolean  @default(true) @map("is_public")
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
-
-  // Relations
-  creator  User      @relation(fields: [creatorId], references: [id])
-  products Product[] @relation("CollectionToProduct")
+  coverImage  String?   @map("cover_image")
+  isPublic    Boolean   @default(true) @map("is_public")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  creator     User      @relation(fields: [creatorId], references: [id])
+  products    Product[] @relation("CollectionToProduct")
 
   @@map("collections")
 }
 
-// 5. product_images TABLE
 model ProductImage {
   id           String   @id @default(uuid())
   productId    String   @map("product_id")
   imageUrl     String   @map("image_url")
   displayOrder Int      @default(0) @map("display_order")
   createdAt    DateTime @default(now()) @map("created_at")
-
-  // Relations
-  product Product @relation(fields: [productId], references: [id])
+  product      Product  @relation(fields: [productId], references: [id])
 
   @@map("product_images")
 }
 
-// 6. product_specifications TABLE
 model ProductSpecification {
-  id         String  @id @default(uuid())
-  productId  String  @map("product_id")
-  specKey    String  @map("spec_key")
-  specValue  String  @map("spec_value")
-
-  // Relations
-  product Product @relation(fields: [productId], references: [id])
+  id        String  @id @default(uuid())
+  productId String  @map("product_id")
+  specKey   String  @map("spec_key")
+  specValue String  @map("spec_value")
+  product   Product @relation(fields: [productId], references: [id])
 
   @@map("product_specifications")
-}
+}
+
+
+
+model Store {
+  id           String   @id @default(uuid())
+  userId       String   @unique
+  user         User     @relation(fields: [userId], references: [id])
+  storeName    String
+  storeSlug    String   @unique
+  bio          String?
+  profileImage String?
+  bannerImage  String?
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
