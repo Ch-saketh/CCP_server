@@ -8,30 +8,28 @@ datasource db {
 }
 
 model User {
-  id           String  @id @default(uuid())
-  firstName    String
-  lastName     String
-  username     String  @unique
-  email        String  @unique
-  passwordHash String?
-  phoneNumber  String?
-  role         String  @default("USER")
-  authProvider String  @default("EMAIL")
-  googleId     String?
-  profileImage String?
+  id                  String    @id @default(uuid())
+  firstName           String
+  lastName            String
+  username            String    @unique
+  email               String    @unique
+  passwordHash        String?
+  phoneNumber         String?
+  role                String    @default("USER")
+  authProvider        String    @default("EMAIL")
+  googleId            String?
+  profileImage        String?
+  emailVerified       Boolean   @default(false)
+  otpCode             String?
+  otpExpiresAt        DateTime?
+  onboardingCompleted Boolean   @default(false) @map("onboarding_completed")
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @default(now()) @updatedAt
 
-  // --- NEW: Added for Stores Onboarding ---
-  onboardingCompleted Boolean  @default(false) @map("onboarding_completed")
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @default(now()) @updatedAt
-
-  // Relations
-  refreshTokens   RefreshToken[]
-  creatorProducts CreatorProduct[]
-  collections     Collection[]
-  store           Store?
-
-  // NEW: Added relation for product submissions
+  refreshTokens      RefreshToken[]
+  creatorProducts    CreatorProduct[]
+  collections        Collection[]
+  store              Store?
   productSubmissions ProductSubmission[]
 }
 
@@ -46,7 +44,6 @@ model RefreshToken {
   user User @relation(fields: [userId], references: [id])
 }
 
-// --- STORE TABLE ---
 model Store {
   id           String   @id @default(uuid())
   userId       String   @unique @map("user_id")
@@ -59,13 +56,11 @@ model Store {
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @updatedAt @map("updated_at")
 
-  // Relations
   user User @relation(fields: [userId], references: [id])
 
   @@map("stores")
 }
 
-// 1. PRODUCT TABLE
 model Product {
   id               String   @id @default(uuid())
   title            String
@@ -86,7 +81,6 @@ model Product {
   createdAt        DateTime @default(now()) @map("created_at")
   updatedAt        DateTime @updatedAt @map("updated_at")
 
-  // Relations
   creatorProducts       CreatorProduct[]
   productLinks          ProductLink[]
   productImages         ProductImage[]
@@ -96,7 +90,6 @@ model Product {
   @@map("products")
 }
 
-// 2. creator_products TABLE
 model CreatorProduct {
   id                String   @id @default(uuid())
   creatorId         String   @map("creator_id")
@@ -108,14 +101,12 @@ model CreatorProduct {
   createdAt         DateTime @default(now()) @map("created_at")
   updatedAt         DateTime @updatedAt @map("updated_at")
 
-  // Relations
   creator User    @relation(fields: [creatorId], references: [id])
   product Product @relation(fields: [productId], references: [id])
 
   @@map("creator_products")
 }
 
-// 3. product_links TABLE
 model ProductLink {
   id           String   @id @default(uuid())
   productId    String   @map("product_id")
@@ -125,13 +116,11 @@ model ProductLink {
   isPrimary    Boolean  @default(false) @map("is_primary")
   createdAt    DateTime @default(now()) @map("created_at")
 
-  // Relations
   product Product @relation(fields: [productId], references: [id])
 
   @@map("product_links")
 }
 
-// 4. collections TABLE
 model Collection {
   id          String   @id @default(uuid())
   creatorId   String   @map("creator_id")
@@ -143,14 +132,12 @@ model Collection {
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 
-  // Relations
   creator  User      @relation(fields: [creatorId], references: [id])
   products Product[] @relation("CollectionToProduct")
 
   @@map("collections")
 }
 
-// 5. product_images TABLE
 model ProductImage {
   id           String   @id @default(uuid())
   productId    String   @map("product_id")
@@ -158,43 +145,32 @@ model ProductImage {
   displayOrder Int      @default(0) @map("display_order")
   createdAt    DateTime @default(now()) @map("created_at")
 
-  // Relations
   product Product @relation(fields: [productId], references: [id])
 
   @@map("product_images")
 }
 
-// 6. product_specifications TABLE
 model ProductSpecification {
   id        String @id @default(uuid())
   productId String @map("product_id")
   specKey   String @map("spec_key")
   specValue String @map("spec_value")
 
-  // Relations
   product Product @relation(fields: [productId], references: [id])
 
   @@map("product_specifications")
 }
 
-// 7. product_submissions TABLE (For the asynchronous AI queue)
 model ProductSubmission {
-  id          String @id @default(uuid())
-  creatorId   String @map("creator_id")
-  originalUrl String @map("original_url")
+  id              String   @id @default(uuid())
+  creatorId       String   @map("creator_id")
+  originalUrl     String   @map("original_url")
+  status          String   @default("PENDING")
+  aiExtractedData Json?    @map("ai_extracted_data")
+  errorMessage    String?  @map("error_message")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
 
-  // Tracks the AI parsing state: PENDING, PROCESSING, COMPLETED, FAILED
-  status String @default("PENDING")
-
-  // Once the AI team is done, we can temporarily store the JSON result here
-  aiExtractedData Json? @map("ai_extracted_data")
-
-  errorMessage String? @map("error_message")
-
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
-
-  // Relations
   creator User @relation(fields: [creatorId], references: [id])
 
   @@map("product_submissions")
