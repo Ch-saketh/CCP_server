@@ -5,6 +5,11 @@ const cors = require("cors");
 const authRoutes = require("./src/auth/routes/auth.routes");
 const storeRoutes = require("./src/stores/routes/store.routes");
 
+const adminRoutes =
+  require("./src/admin/routes");
+
+
+
 const app = express();
 
 app.use(cors());
@@ -24,7 +29,11 @@ app.get("/health", (req, res) => {
 
 // Mount Routes
 app.use("/api/auth", authRoutes);
-app.use("/api/stores", storeRoutes); // ADDED: Mount stores routes
+app.use("/api/stores", storeRoutes); 
+app.use(
+  "/admin",
+  adminRoutes
+);// ADDED: Mount stores routes
 
 // Global error handler
 app.use((error, req, res, next) => {
