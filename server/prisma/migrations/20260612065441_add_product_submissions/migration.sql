@@ -14,3 +14,4 @@ CREATE TABLE "product_submissions" (
 
 -- AddForeignKey
 ALTER TABLE "product_submissions" ADD CONSTRAINT "product_submissions_creator_id_fkey" FOREIGN KEY ("creator_id") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+x
