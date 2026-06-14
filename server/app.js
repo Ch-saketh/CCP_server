@@ -7,6 +7,7 @@ const storeRoutes = require("./src/stores/routes/store.routes");
 const creatorProductRoutes = require("./src/products/routes/creatorProduct.routes");
 const productRoutes = require("./src/products/routes/product.routes");
 const aiRoutes = require("./src/ai/routes/ai.routes");
+const analyticsRoutes = require("./src/analytics/routes/analytics.routes");
 
 const app = express();
 
@@ -42,6 +43,10 @@ app.use(
 app.use(
   "/api/ai",
   aiRoutes
+);
+app.use(
+  "/api/analytics",
+  analyticsRoutes
 );
 
 // Global error handler

@@ -1,4 +1,12 @@
-const getProductDetailsService = require("../services/getProductDetails.service");
+const prisma = require("../../auth/config/db");
+
+const getProductDetailsService = require(
+  "../services/getProductDetails.service"
+);
+
+const trackingService = require(
+  "../../analytics/services/tracking.service"
+);
 
 exports.getProductDetails = async (req, res) => {
   try {
@@ -11,19 +19,39 @@ exports.getProductDetails = async (req, res) => {
       });
     }
 
-    const product = await getProductDetailsService.retrieveProductDetails(slug);
+    const product =
+      await getProductDetailsService
+        .retrieveProductDetails(slug);
+
+    const creatorProduct =
+      await prisma.creatorProduct.findFirst({
+        where: {
+          productId: product.id,
+        },
+      });
+
+    if (creatorProduct) {
+      await trackingService.trackProductView({
+        creatorId: creatorProduct.creatorId,
+        productId: product.id,
+      });
+    }
 
     return res.status(200).json({
       success: true,
       product,
     });
+
   } catch (error) {
+
     if (error.message === "NOT_FOUND") {
       return res.status(404).json({
         success: false,
-        message: "Product not found in global catalog",
+        message:
+          "Product not found in global catalog",
       });
     }
+
     return res.status(500).json({
       success: false,
       message: "Server Error",

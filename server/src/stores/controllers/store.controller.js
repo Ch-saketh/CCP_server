@@ -1,5 +1,8 @@
 const prisma = require("../../auth/config/db");
 const { generateUniqueSlug } = require("../services/store.service");
+const trackingService = require(
+  "../../analytics/services/tracking.service"
+);
 
 // POST /api/stores/onboarding
 exports.createStoreOnboarding = async (req, res) => {
@@ -132,41 +135,48 @@ exports.getStoreBySlug = async (req, res) => {
     const { slug } = req.params;
 
     const store = await prisma.store.findUnique({
-      where: { storeSlug: slug, isActive: true },
+      where: {
+        storeSlug: slug,
+      },
       include: {
         user: {
           select: {
+            id: true,
             firstName: true,
             lastName: true,
             profileImage: true,
-            
-            // --- THE NEW ADDITION: Fetch the Creator's Products ---
             creatorProducts: {
-              where: { status: 'COMPLETED' }, // Only show successfully processed products
-              orderBy: { createdAt: 'desc' }, // Newest first
+              where: {
+                status: "COMPLETED",
+              },
+              orderBy: {
+                createdAt: "desc",
+              },
               include: {
                 product: {
                   include: {
-                    // Include the global affiliate links and images
                     productLinks: true,
-                    productImages: true 
-                  }
-                }
-              }
-            }
-            // ------------------------------------------------------
-            
-          }
-        }
-      }
+                    productImages: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
     });
 
-    if (!store) {
+    if (!store || !store.isActive) {
       return res.status(404).json({
         success: false,
         message: "Storefront not found.",
       });
     }
+    
+    await trackingService.trackStoreView({
+      creatorId: store.user.id,
+      storeId: store.id,
+    });
 
     return res.json({
       success: true,
