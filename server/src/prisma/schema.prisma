@@ -186,3 +186,94 @@ model ProductSubmission {
 
   @@map("product_submissions")
 }
+
+// 8. analytics_events TABLE
+model AnalyticsEvent {
+  id String @id @default(uuid())
+
+  eventType String
+
+  creatorId    String? @map("creator_id")
+  storeId      String? @map("store_id")
+  productId    String? @map("product_id")
+  collectionId String? @map("collection_id")
+
+  visitorId String? @map("visitor_id")
+
+  trafficSource String? @map("traffic_source")
+  deviceType    String? @map("device_type")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([creatorId])
+  @@index([productId])
+  @@index([collectionId])
+  @@index([storeId])
+  @@index([createdAt])
+
+  @@map("analytics_events")
+}
+
+// 9. storefront_analytics TABLE
+model StorefrontAnalytics {
+  id String @id @default(uuid())
+
+  creatorId String @map("creator_id")
+
+  date DateTime
+
+  views Int @default(0)
+
+  uniqueVisitors Int @default(0)
+
+  createdAt DateTime @default(now())
+
+  @@unique([creatorId, date])
+  @@index([date])
+
+  @@map("storefront_analytics")
+}
+
+// 10. product_analytics TABLE
+model ProductAnalytics {
+  id String @id @default(uuid())
+
+  creatorId String @map("creator_id")
+
+  productId String @map("product_id")
+
+  date DateTime
+
+  views Int @default(0)
+
+  clicks Int @default(0)
+
+  createdAt DateTime @default(now())
+
+  @@unique([productId, date])
+  @@index([date])
+
+  @@map("product_analytics")
+}
+
+// 11. collection_analytics TABLE
+model CollectionAnalytics {
+  id String @id @default(uuid())
+
+  creatorId String @map("creator_id")
+
+  collectionId String @map("collection_id")
+
+  date DateTime
+
+  views Int @default(0)
+
+  clicks Int @default(0)
+
+  createdAt DateTime @default(now())
+
+  @@unique([collectionId, date])
+  @@index([date])
+
+  @@map("collection_analytics")
+}
