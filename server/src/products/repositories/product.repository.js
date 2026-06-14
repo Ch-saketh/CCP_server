@@ -77,9 +77,12 @@ exports.updateCreatorProduct = async (id, data) => {
 };
 
 
-exports.findCreatorProductsByUserId = async (creatorId) => {
+exports.findCreatorProductsByUserId = async (creatorId, status) => {
   return await prisma.creatorProduct.findMany({
-    where: { creatorId },
+    where: { 
+      creatorId,
+      ...(status && { status })
+    },
     include: {
       product: {
         include: {
@@ -109,8 +112,9 @@ exports.findCreatorProductById = async (id) => {
 };
 
 exports.deleteCreatorProduct = async (id) => {
-  return await prisma.creatorProduct.delete({
-    where: { id }
+  return await prisma.creatorProduct.update({
+    where: { id },
+    data: { status: "INACTIVE" }
   });
 };
 

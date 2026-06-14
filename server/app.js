@@ -4,7 +4,7 @@ const cors = require("cors");
 // Import Routes
 const authRoutes = require("./src/auth/routes/auth.routes");
 const storeRoutes = require("./src/stores/routes/store.routes");
-const creatorProductRoutes = require("./src/products/routes/creatorProduct.routes");
+const creatorProductRoutes = require("./src/user/routes/creatorProduct.routes");
 const productRoutes = require("./src/products/routes/product.routes");
 const aiRoutes = require("./src/ai/routes/ai.routes");
 const analyticsRoutes = require("./src/analytics/routes/analytics.routes");

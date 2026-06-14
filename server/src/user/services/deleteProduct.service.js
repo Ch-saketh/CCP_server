@@ -1,4 +1,4 @@
-const productRepository = require("../repositories/product.repository");
+const productRepository = require("../../products/repositories/product.repository");
 
 exports.removeProductFromProfile = async (creatorId, creatorProductId) => {
   const creatorProduct = await productRepository.findCreatorProductById(creatorProductId);
@@ -13,6 +13,6 @@ exports.removeProductFromProfile = async (creatorId, creatorProductId) => {
     throw new Error("UNAUTHORIZED");
   }
 
-  // 3. Delete from database
+  // 3. Delete from database (soft-delete deactivation)
   return await productRepository.deleteCreatorProduct(creatorProductId);
 };

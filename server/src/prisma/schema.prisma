@@ -188,9 +188,7 @@ model ProductSubmission {
 }
 
 // 8. analytics_events TABLE
-// Stores raw analytics events for future reporting,
-// traffic source analysis, device analytics,
-// audience analytics, and AI insights.
+
 model AnalyticsEvent {
   id String @id @default(uuid())
 
@@ -213,12 +211,12 @@ model AnalyticsEvent {
   @@index([collectionId])
   @@index([storeId])
   @@index([createdAt])
+
   @@map("analytics_events")
 }
 
 // 9. storefront_analytics TABLE
-// Stores daily aggregated storefront analytics
-// for dashboard metrics and trend charts.
+
 model StorefrontAnalytics {
   id String @id @default(uuid())
 
@@ -234,12 +232,12 @@ model StorefrontAnalytics {
 
   @@unique([creatorId, date])
   @@index([date])
+
   @@map("storefront_analytics")
 }
 
 // 10. product_analytics TABLE
-// Stores daily aggregated analytics
-// for individual products.
+
 model ProductAnalytics {
   id String @id @default(uuid())
 
@@ -257,12 +255,12 @@ model ProductAnalytics {
 
   @@unique([productId, date])
   @@index([date])
+
   @@map("product_analytics")
 }
 
 // 11. collection_analytics TABLE
-// Stores daily aggregated analytics
-// for creator collections.
+
 model CollectionAnalytics {
   id String @id @default(uuid())
 
