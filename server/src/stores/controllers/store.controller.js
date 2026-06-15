@@ -173,10 +173,15 @@ exports.getStoreBySlug = async (req, res) => {
       });
     }
     
-    await trackingService.trackStoreView({
-      creatorId: store.user.id,
-      storeId: store.id,
-    });
+    const visitorId =
+        req.headers["x-visitor-id"] ||
+        req.ip;
+
+      await trackingService.trackStoreView({
+        creatorId: store.user.id,
+        storeId: store.id,
+        visitorId,
+      });
 
     return res.json({
       success: true,

@@ -11,6 +11,22 @@ exports.findProductBySlugOrSource = async (slug, sourcePlatform, sourceProductId
   });
 };
 
+exports.findProductForRedirect = async (productId) => {
+  return await prisma.product.findUnique({
+    where: {
+      id: productId,
+    },
+    include: {
+      productLinks: {
+        where: {
+          isPrimary: true,
+        },
+        take: 1,
+      },
+    },
+  });
+};
+
 exports.countProductsBySlug = async (slug) => {
   return await prisma.product.count({
     where: { slug: { startsWith: slug } }

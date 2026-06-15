@@ -8,33 +8,113 @@ const {
 class AnalyticsService {
 
   async getDashboard(
-    creatorId
-  ) {
+  creatorId
+) {
 
-    const data =
+  const data =
+    await analyticsRepository
+      .getDashboardMetrics(
+        creatorId
+      );
+
+  const totalViews =
+    data.storeViews._sum.views || 0;
+
+  const uniqueVisitors =
+    data.storeViews._sum.uniqueVisitors || 0;
+
+  const totalProductClicks =
+    data.productClicks._sum.clicks || 0;
+
+  let topProduct = null;
+
+  if (data.topProduct) {
+
+    const product =
       await analyticsRepository
-        .getDashboardMetrics(
-          creatorId
+        .getProductById(
+          data.topProduct.productId
         );
 
-    return {
-      totalViews:
-        data.storeViews._sum.views || 0,
+    if (product) {
 
-      uniqueVisitors:
-        data.storeViews._sum.uniqueVisitors || 0,
+      topProduct = {
 
-      productsCount:
-        data.productsCount,
+        id:
+          product.id,
 
-      collectionsCount:
-        data.collectionsCount,
-    };
+        title:
+          product.title,
+
+        image:
+          product.image,
+
+        views:
+          data.topProduct.views,
+
+        clickUrl:
+          product.clickUrl,
+
+      };
+
+    }
+
   }
 
+  return {
+
+    totalViews,
+
+    uniqueVisitors,
+
+    totalProductClicks,
+
+    ctr:
+      calculateCTR(
+        totalViews,
+        totalProductClicks
+      ),
+
+    productsCount:
+      data.productsCount,
+
+    collectionsCount:
+      data.collectionsCount,
+
+    topProduct,
+
+  };
+
+}
   async getProductReport(
-    productId
-  ) {
+  creatorId,
+  productId
+) {
+
+  const ownsProduct =
+  await analyticsRepository
+    .creatorOwnsProduct(
+      creatorId,
+      productId
+    );
+
+if (!ownsProduct) {
+  throw new Error(
+    "UNAUTHORIZED_PRODUCT"
+  );
+}
+
+    const product =
+  await analyticsRepository
+    .getProductById(
+      productId
+    );
+
+    if (!product) {
+  throw new Error(
+    "PRODUCT_NOT_FOUND"
+  );
+}
 
     const analytics =
       await analyticsRepository
@@ -57,52 +137,211 @@ class AnalyticsService {
       );
 
     return {
+  product: {
+  id: product.id,
+  title: product.title,
+  image: product.image,
+  category: product.category,
+  clickUrl: product.clickUrl,
+},
+
+  metrics: {
+    views: totalViews,
+    clicks: totalClicks,
+    ctr: calculateCTR(
       totalViews,
-      totalClicks,
-      ctr:
-        calculateCTR(
-          totalViews,
-          totalClicks
-        ),
-      analytics,
-    };
+      totalClicks
+    ),
+  },
+};
   }
 
   async getCollectionReport(
-    collectionId
-  ) {
+  creatorId,
+  collectionId
+) {
 
-    const analytics =
-      await analyticsRepository
-        .getCollectionAnalytics(
-          collectionId
-        );
-
-    const totalViews =
-      analytics.reduce(
-        (sum, item) =>
-          sum + item.views,
-        0
+  const ownsCollection =
+    await analyticsRepository
+      .creatorOwnsCollection(
+        creatorId,
+        collectionId
       );
 
-    const totalClicks =
-      analytics.reduce(
-        (sum, item) =>
-          sum + item.clicks,
-        0
+  if (!ownsCollection) {
+    throw new Error(
+      "UNAUTHORIZED_COLLECTION"
+    );
+  }
+
+  const analytics =
+    await analyticsRepository
+      .getCollectionAnalytics(
+        collectionId
       );
 
-    return {
-      totalViews,
-      totalClicks,
+  
+
+  const totalViews =
+    analytics.reduce(
+      (sum, item) =>
+        sum + item.views,
+      0
+    );
+
+  const totalClicks =
+    analytics.reduce(
+      (sum, item) =>
+        sum + item.clicks,
+      0
+    );
+
+  return {
+
+    collection: {
+      id:
+        collectionId,
+    },
+
+    metrics: {
+
+      views:
+        totalViews,
+
+      clicks:
+        totalClicks,
+
       ctr:
         calculateCTR(
           totalViews,
           totalClicks
         ),
-      analytics,
-    };
-  }
+
+    },
+
+  };
+}
+  
+
+  async getTopProducts() {
+
+  const analytics =
+    await analyticsRepository
+      .getTopProducts();
+
+  const leaderboard =
+    await Promise.all(
+
+      analytics.map(
+        async (
+          item,
+          index
+        ) => {
+
+          const product =
+            await analyticsRepository
+              .getProductById(
+                item.productId
+              );
+
+          
+
+          return {
+
+        rank:
+          index + 1,
+
+        id:
+          product?.id,
+
+        title:
+          product?.title,
+
+        image:
+          product?.image,
+
+        category:
+          product?.category,
+
+        views:
+          item.views,
+
+        clicks:
+          item.clicks,
+
+        ctr:
+          calculateCTR(
+            item.views,
+            item.clicks
+          ),
+
+        clickUrl:
+          product?.clickUrl,
+
+      };
+        }
+      )
+    );
+
+  return leaderboard;
+
+}
+
+async getTopCreators() {
+
+  const creators =
+    await analyticsRepository
+      .getTopCreators();
+
+  const leaderboard =
+    await Promise.all(
+
+      creators.map(
+        async (
+          creator,
+          index
+        ) => {
+
+          const user =
+            await analyticsRepository
+              .getUserById(
+                creator.creatorId
+              );
+
+              if (!user) {
+                return null;
+              }
+
+          return {
+
+            rank:
+              index + 1,
+
+
+            name:
+              `${user?.firstName || ""} ${user?.lastName || ""}`.trim(),
+
+            username:
+              user?.username,
+
+            profileImage:
+              user?.profileImage,
+
+            views:
+              creator.views,
+
+            uniqueVisitors:
+              creator.uniqueVisitors,
+
+          };
+
+        }
+      )
+    );
+
+return leaderboard.filter(Boolean);
+
+}
 
 }
 
