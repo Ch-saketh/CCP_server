@@ -8,6 +8,11 @@ const creatorProductRoutes = require("./src/user/routes/creatorProduct.routes");
 const productRoutes = require("./src/products/routes/product.routes");
 const aiRoutes = require("./src/ai/routes/ai.routes");
 
+const adminRoutes =
+  require("./src/admin/routes");
+
+
+
 const app = express();
 
 app.use(cors());
@@ -27,7 +32,11 @@ app.get("/health", (req, res) => {
 
 // Mount Routes
 app.use("/api/auth", authRoutes);
-app.use("/api/stores", storeRoutes); // ADDED: Mount stores routes
+app.use("/api/stores", storeRoutes); 
+app.use(
+  "/admin",
+  adminRoutes
+);// ADDED: Mount stores routes
 
 app.use(
   "/api/creator-products",
