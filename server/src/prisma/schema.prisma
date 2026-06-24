@@ -86,6 +86,7 @@ model Product {
   @@map("products")
 }
 
+// 2. creator_products TABLE
 model CreatorProduct {
   id                String   @id @default(uuid())
   creatorId         String   @map("creator_id")
@@ -93,6 +94,11 @@ model CreatorProduct {
   creatorNote       String?  @map("creator_note")
   customTitle       String?  @map("custom_title")
   customDescription String?  @map("custom_description")
+  
+  // 👉 ADD THESE TWO LINES:
+  customUrl         String?  @map("custom_url")
+  promoCode         String?  @map("promo_code")
+  
   status            String   @default("PENDING")
   createdAt         DateTime @default(now()) @map("created_at")
   updatedAt         DateTime @updatedAt @map("updated_at")
@@ -102,6 +108,7 @@ model CreatorProduct {
   @@map("creator_products")
 }
 
+// 3. product_links TABLE
 model ProductLink {
   id           String   @id @default(uuid())
   productId    String   @map("product_id")
@@ -115,6 +122,7 @@ model ProductLink {
   @@map("product_links")
 }
 
+// 4. collections TABLE
 model Collection {
   id          String    @id @default(uuid())
   creatorId   String    @map("creator_id")
@@ -131,6 +139,7 @@ model Collection {
   @@map("collections")
 }
 
+// 5. product_images TABLE
 model ProductImage {
   id           String   @id @default(uuid())
   productId    String   @map("product_id")
@@ -142,6 +151,7 @@ model ProductImage {
   @@map("product_images")
 }
 
+// 6. product_specifications TABLE
 model ProductSpecification {
   id        String  @id @default(uuid())
   productId String  @map("product_id")
@@ -152,6 +162,7 @@ model ProductSpecification {
   @@map("product_specifications")
 }
 
+// 7. product_submissions TABLE (For the asynchronous AI queue)
 model ProductSubmission {
   id              String   @id @default(uuid())
   creatorId       String   @map("creator_id")
@@ -166,8 +177,94 @@ model ProductSubmission {
   @@map("product_submissions")
 }
 
-model playing_with_neon {
-  id    Int    @id @default(autoincrement())
-  name  String
-  value Float? @db.Real
+
+// 8. analytics_events TABLE
+model AnalyticsEvent {
+  id String @id @default(uuid())
+
+  eventType String
+
+  creatorId    String? @map("creator_id")
+  storeId      String? @map("store_id")
+  productId    String? @map("product_id")
+  collectionId String? @map("collection_id")
+
+  visitorId String? @map("visitor_id")
+
+  trafficSource String? @map("traffic_source")
+  deviceType    String? @map("device_type")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([creatorId])
+  @@index([productId])
+  @@index([collectionId])
+  @@index([storeId])
+  @@index([createdAt])
+
+  @@map("analytics_events")
+}
+
+// 9. storefront_analytics TABLE
+model StorefrontAnalytics {
+  id String @id @default(uuid())
+
+  creatorId String @map("creator_id")
+
+  date DateTime
+
+  views Int @default(0)
+
+  uniqueVisitors Int @default(0)
+
+  createdAt DateTime @default(now())
+
+  @@unique([creatorId, date])
+  @@index([date])
+
+  @@map("storefront_analytics")
+}
+
+// 10. product_analytics TABLE
+model ProductAnalytics {
+  id String @id @default(uuid())
+
+  creatorId String @map("creator_id")
+
+  productId String @map("product_id")
+
+  date DateTime
+
+  views Int @default(0)
+
+  clicks Int @default(0)
+
+  createdAt DateTime @default(now())
+
+  @@unique([productId, date])
+  @@index([date])
+
+  @@map("product_analytics")
+}
+
+// 11. collection_analytics TABLE
+model CollectionAnalytics {
+  id String @id @default(uuid())
+
+  creatorId String @map("creator_id")
+
+  collectionId String @map("collection_id")
+
+  date DateTime
+
+  views Int @default(0)
+
+  clicks Int @default(0)
+
+  createdAt DateTime @default(now())
+
+  @@unique([collectionId, date])
+  @@index([date])
+
+  @@map("collection_analytics")
 }
