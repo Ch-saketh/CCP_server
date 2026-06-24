@@ -1,0 +1,279 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                  String    @id @default(uuid())
+  firstName           String
+  lastName            String
+  username            String    @unique
+  email               String    @unique
+  passwordHash        String?
+  phoneNumber         String?
+  role                String    @default("USER")
+  authProvider        String    @default("EMAIL")
+  googleId            String?
+  profileImage        String?
+  emailVerified       Boolean   @default(false)
+  otpCode             String?
+  otpExpiresAt        DateTime?
+  onboardingCompleted Boolean   @default(false) @map("onboarding_completed")
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @default(now()) @updatedAt
+
+  refreshTokens      RefreshToken[]
+  creatorProducts    CreatorProduct[]
+  collections        Collection[]
+  store              Store?
+  productSubmissions ProductSubmission[]
+}
+
+model RefreshToken {
+  id        String    @id @default(uuid())
+  token     String
+  userId    String
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+model Store {
+  id           String   @id @default(uuid())
+  userId       String   @unique @map("user_id")
+  storeName    String   @map("store_name")
+  storeSlug    String   @unique @map("store_slug")
+  bio          String?
+  profileImage String?  @map("profile_image")
+  bannerImage  String?  @map("banner_image")
+  isActive     Boolean  @default(true) @map("is_active")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("stores")
+}
+
+model Product {
+  id               String   @id @default(uuid())
+  title            String
+  slug             String   @unique
+  brand            String?
+  shortDescription String?  @map("short_description")
+  fullDescription  String?  @map("full_description")
+  category         String
+  subcategory      String?
+  primaryImageUrl  String?  @map("primary_image_url")
+  price            Decimal  @db.Decimal(10, 2)
+  currency         String   @default("INR")
+  rating           Float?
+  reviewCount      Int      @default(0) @map("review_count")
+  sourcePlatform   String?  @map("source_platform")
+  sourceProductId  String?  @map("source_product_id")
+  isActive         Boolean  @default(true) @map("is_active")
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  creatorProducts       CreatorProduct[]
+  productLinks          ProductLink[]
+  productImages         ProductImage[]
+  productSpecifications ProductSpecification[]
+  collections           Collection[]           @relation("CollectionToProduct")
+
+  @@map("products")
+}
+
+// 2. creator_products TABLE
+model CreatorProduct {
+  id                String   @id @default(uuid())
+  creatorId         String   @map("creator_id")
+  productId         String   @map("product_id")
+  creatorNote       String?  @map("creator_note")
+  customTitle       String?  @map("custom_title")
+  customDescription String?  @map("custom_description")
+  
+  // 👉 ADD THESE TWO LINES:
+  customUrl         String?  @map("custom_url")
+  promoCode         String?  @map("promo_code")
+  
+  status            String   @default("PENDING")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  creator User    @relation(fields: [creatorId], references: [id])
+  product Product @relation(fields: [productId], references: [id])
+
+  @@map("creator_products")
+}
+
+// 3. product_links TABLE
+model ProductLink {
+  id           String   @id @default(uuid())
+  productId    String   @map("product_id")
+  platform     String
+  originalUrl  String   @map("original_url")
+  affiliateUrl String?  @map("affiliate_url")
+  isPrimary    Boolean  @default(false) @map("is_primary")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  product Product @relation(fields: [productId], references: [id])
+
+  @@map("product_links")
+}
+
+// 4. collections TABLE
+model Collection {
+  id          String   @id @default(uuid())
+  creatorId   String   @map("creator_id")
+  title       String
+  slug        String   @unique
+  description String?
+  coverImage  String?  @map("cover_image")
+  isPublic    Boolean  @default(true) @map("is_public")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  creator  User      @relation(fields: [creatorId], references: [id])
+  products Product[] @relation("CollectionToProduct")
+
+  @@map("collections")
+}
+
+// 5. product_images TABLE
+model ProductImage {
+  id           String   @id @default(uuid())
+  productId    String   @map("product_id")
+  imageUrl     String   @map("image_url")
+  displayOrder Int      @default(0) @map("display_order")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  product Product @relation(fields: [productId], references: [id])
+
+  @@map("product_images")
+}
+
+// 6. product_specifications TABLE
+model ProductSpecification {
+  id        String @id @default(uuid())
+  productId String @map("product_id")
+  specKey   String @map("spec_key")
+  specValue String @map("spec_value")
+
+  product Product @relation(fields: [productId], references: [id])
+
+  @@map("product_specifications")
+}
+
+// 7. product_submissions TABLE (For the asynchronous AI queue)
+model ProductSubmission {
+  id              String   @id @default(uuid())
+  creatorId       String   @map("creator_id")
+  originalUrl     String   @map("original_url")
+  status          String   @default("PENDING")
+  aiExtractedData Json?    @map("ai_extracted_data")
+  errorMessage    String?  @map("error_message")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  creator User @relation(fields: [creatorId], references: [id])
+
+  @@map("product_submissions")
+}
+
+// 8. analytics_events TABLE
+model AnalyticsEvent {
+  id String @id @default(uuid())
+
+  eventType String
+
+  creatorId    String? @map("creator_id")
+  storeId      String? @map("store_id")
+  productId    String? @map("product_id")
+  collectionId String? @map("collection_id")
+
+  visitorId String? @map("visitor_id")
+
+  trafficSource String? @map("traffic_source")
+  deviceType    String? @map("device_type")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([creatorId])
+  @@index([productId])
+  @@index([collectionId])
+  @@index([storeId])
+  @@index([createdAt])
+
+  @@map("analytics_events")
+}
+
+// 9. storefront_analytics TABLE
+model StorefrontAnalytics {
+  id String @id @default(uuid())
+
+  creatorId String @map("creator_id")
+
+  date DateTime
+
+  views Int @default(0)
+
+  uniqueVisitors Int @default(0)
+
+  createdAt DateTime @default(now())
+
+  @@unique([creatorId, date])
+  @@index([date])
+
+  @@map("storefront_analytics")
+}
+
+// 10. product_analytics TABLE
+model ProductAnalytics {
+  id String @id @default(uuid())
+
+  creatorId String @map("creator_id")
+
+  productId String @map("product_id")
+
+  date DateTime
+
+  views Int @default(0)
+
+  clicks Int @default(0)
+
+  createdAt DateTime @default(now())
+
+  @@unique([productId, date])
+  @@index([date])
+
+  @@map("product_analytics")
+}
+
+// 11. collection_analytics TABLE
+model CollectionAnalytics {
+  id String @id @default(uuid())
+
+  creatorId String @map("creator_id")
+
+  collectionId String @map("collection_id")
+
+  date DateTime
+
+  views Int @default(0)
+
+  clicks Int @default(0)
+
+  createdAt DateTime @default(now())
+
+  @@unique([collectionId, date])
+  @@index([date])
+
+  @@map("collection_analytics")
+}
