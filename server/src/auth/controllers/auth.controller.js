@@ -571,7 +571,17 @@ exports.googleAuth = async (
 
   try {
 
-    const { token } = req.body;
+    const token =
+      req.body.token ||
+      req.body.credential;
+
+    if (!token) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Google token is required",
+      });
+    }
 
     // verify token
     const payload =
